@@ -15,7 +15,7 @@ module Bosh
           dataset = Bosh::Director::Models::Config.where(deleted: false)
           dataset = dataset.where(type: type) if type
           dataset = dataset.where(name: name) if name
-          dataset = dataset.where(id: dataset.select(:id).group(:type, :name)) if latest == 'true'
+          dataset = dataset.where(id: dataset.select{max(:id)}.group(:type, :name)) if latest == 'true'
           dataset.order(:type, :name, Sequel.desc(:id)).all
         end
 
