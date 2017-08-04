@@ -103,6 +103,61 @@ describe Bosh::Director::Api::ConfigManager do
           expect(configs.count).to eq(0)
         end
       end
+
+      context 'when configs have been deleted' do
+        it 'returns only not deleted configs' do
+          Bosh::Director::Models::Config.make(type: 'my-type', name: 'my-name', deleted: true)
+
+          configs = manager.find(type: 'my-type', name: 'my-name')
+
+          expect(configs.count).to eq(1)
+        end
+      end
+    end
+  end
+
+  describe '#delete' do
+    context 'when config entry exists' do
+      it "sets deleted to 'true'" do
+        Bosh::Director::Models::Config.make(type: 'my-type', name: 'my-name')
+
+        count = manager.delete('my-type', 'my-name')
+
+        expect(count).to eq(1)
+
+        configs = Bosh::Director::Models::Config.where(type: 'my-type', name: 'my-name')
+
+        expect(configs.count).to eq(1)
+        expect(configs.first.deleted).to eq(true)
+      end
+    end
+
+    context 'when multiple config entries exist' do
+      it "sets deleted to all matching configs to 'true'" do
+        Bosh::Director::Models::Config.make(type: 'my-type', name: 'my-name')
+        Bosh::Director::Models::Config.make(type: 'my-type', name: 'my-name')
+        Bosh::Director::Models::Config.make(type: 'other-type', name: 'other-name')
+
+        count = manager.delete('my-type', 'my-name')
+
+        expect(count).to eq(2)
+
+        configs = Bosh::Director::Models::Config.where(type: 'my-type', name: 'my-name')
+
+        expect(configs.map(:deleted)).to all(eq(true))
+
+        configs = Bosh::Director::Models::Config.where(type: 'other-type', name: 'other-name')
+
+        expect(configs.first.deleted).to eq(false)
+      end
+    end
+
+    context 'when the configs table is empty' do
+      it 'does not crash' do
+        count = manager.delete('my-type', 'my-name')
+
+        expect(count).to eq(0)
+      end
     end
   end
 end

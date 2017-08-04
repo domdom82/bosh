@@ -289,5 +289,62 @@ module Bosh::Director
         end
       end
     end
+
+    describe 'DELETE', '/' do
+      describe 'when user has readonly access' do
+        before { basic_authorize 'reader', 'reader' }
+
+        it 'denies access' do
+          expect(delete('/?type=my-type&name=my-name').status).to eq(401)
+        end
+      end
+
+      describe 'when user has admin access' do
+        before { authorize('admin', 'admin') }
+
+        context 'when type and name are given' do
+          context 'when config exists' do
+            before do
+              Models::Config.make(
+                type: 'my-type',
+                name: 'my-name'
+              )
+            end
+
+            it 'deletes the config' do
+              expect(delete('/?type=my-type&name=my-name').status).to eq(204)
+
+              configs = JSON.parse(get('/?type=my-type&name=my-name&latest=false').body)
+
+              expect(configs.count).to eq(0)
+            end
+          end
+
+          context "when there is no config matching given 'type' and 'name'" do
+            it 'responds with 404' do
+              expect(delete('/?type=my-type&name=my-name').status).to eq(404)
+            end
+          end
+        end
+
+        context "when 'type' parameter is missing" do
+          it 'responds with 400' do
+            response = delete('/?name=my-name')
+
+            expect(response.status).to eq(400)
+            expect(JSON.parse(response.body)['description']).to eq("'type' is required")
+          end
+        end
+
+        context "when 'name' parameter is missing" do
+          it 'responds with 400' do
+            response = delete('/?type=my-type')
+
+            expect(response.status).to eq(400)
+            expect(JSON.parse(response.body)['description']).to eq("'name' is required")
+          end
+        end
+      end
+    end
   end
 end

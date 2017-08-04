@@ -116,5 +116,6 @@
   "20170705204352_add_cpi_to_disks": "047e88df8dbe6cc449d675472bb4f838d8e6e85e",
   "20170705211620_add_templates_json_to_templates": "ed9969aab2493052530e36d012cd892948641f2c",
   "20170801134144_add_configs": "c9eb9b4d9386eb6cc3b0ee09ca971613dd34f91a",
+  "20170803081848_add_deleted_to_configs": "5ff21905f77b0d0639eda88dbb1867af7bce77ee",
   "20170803163303_register_known_az_names": "51ab548d8187c75a1a7dff34861f658dfc11dae9"
 }

@@ -12,11 +12,17 @@ module Bosh
         end
 
         def find(type: nil, name: nil, latest: nil)
-          dataset = Bosh::Director::Models::Config
+          dataset = Bosh::Director::Models::Config.where(deleted: false)
           dataset = dataset.where(type: type) if type
           dataset = dataset.where(name: name) if name
           dataset = dataset.where(id: dataset.select(:id).group(:type, :name)) if latest == 'true'
           dataset.order(:type, :name, Sequel.desc(:id)).all
+        end
+
+        def delete(type, name)
+          Bosh::Director::Models::Config
+            .where(type: type, name: name)
+            .update(deleted: true)
         end
       end
     end

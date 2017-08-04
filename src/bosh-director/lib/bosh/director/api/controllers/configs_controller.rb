@@ -5,9 +5,7 @@ module Bosh::Director
     class ConfigsController < BaseController
 
       get '/', scope: :read do
-        if params['latest'].nil? || params['latest'].empty?
-          raise ValidationMissingField, "'latest' is required"
-        end
+        check(params, 'latest')
 
         unless ['true', 'false'].include?(params['latest'])
           raise ValidationInvalidValue, "'latest' must be 'true' or 'false'"
@@ -25,12 +23,8 @@ module Bosh::Director
       end
 
       post '/', :consumes => :yaml do
-        if params['type'].nil? || params['type'].empty?
-          raise ValidationMissingField, "'type' is required"
-        end
-        if params['name'].nil? || params['name'].empty?
-          raise ValidationMissingField, "'name' is required"
-        end
+        check(params, 'type')
+        check(params, 'name')
 
         manifest_text = request.body.read
         begin
@@ -44,6 +38,18 @@ module Bosh::Director
 
         status(201)
         return json_encode(sql_to_hash(config))
+      end
+
+      delete '/' do
+        check(params, 'type')
+        check(params, 'name')
+
+        count = Bosh::Director::Api::ConfigManager.new.delete(params['type'], params['name'])
+        if count > 0
+          status(204)
+        else
+          status(404)
+        end
       end
 
       private
@@ -65,6 +71,12 @@ module Bosh::Director
             type: config.type,
             name: config.name
         }
+      end
+
+      def check(param, name)
+        if param[name].nil? || param[name].empty?
+          raise ValidationMissingField, "'#{name}' is required"
+        end
       end
     end
   end
